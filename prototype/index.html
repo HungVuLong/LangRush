@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LangRush — Prototype (Solo)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="app-header">
+    <span class="brand">LangRush</span>
+    <span class="tag">Prototype · Solo · Minimal Focus</span>
+  </header>
+
+  <main id="main" class="app-main">
+    <!-- AUTH -->
+    <section id="screen-auth" class="screen" aria-labelledby="auth-title">
+      <div class="card">
+        <div class="tabs" role="tablist" aria-label="Authentication mode">
+          <button id="tab-login" class="tab active" role="tab" aria-selected="true" type="button">Log in</button>
+          <button id="tab-register" class="tab" role="tab" aria-selected="false" type="button">Register</button>
+        </div>
+        <h1 id="auth-title">Log in</h1>
+        <p class="muted">Prototype: register any username (min 3 chars) and password (min 6 chars). Data resets on reload.</p>
+        <p id="auth-error" class="form-error" role="alert" aria-live="assertive"></p>
+        <form id="auth-form" novalidate>
+          <div class="field">
+            <label for="auth-username">Username</label>
+            <input id="auth-username" name="username" type="text" autocomplete="username" aria-describedby="err-username" />
+            <div id="err-username" class="field-error" aria-live="polite"></div>
+          </div>
+          <div class="field">
+            <label for="auth-password">Password</label>
+            <input id="auth-password" name="password" type="password" autocomplete="current-password" aria-describedby="err-password" />
+            <div id="err-password" class="field-error" aria-live="polite"></div>
+          </div>
+          <button id="auth-submit" class="btn primary block" type="submit">Log in</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- HOME -->
+    <section id="screen-home" class="screen" hidden aria-labelledby="home-title">
+      <h1 id="home-title">Welcome, <span id="home-user">player</span></h1>
+      <p class="muted">Solo Practice — race, choose a path at each checkpoint, and answer questions to advance.</p>
+      <div class="row">
+        <button id="home-start" class="btn primary" type="button">Start Solo Practice</button>
+        <button id="home-logout" class="btn" type="button">Log out</button>
+      </div>
+    </section>
+
+    <!-- RACE -->
+    <section id="screen-race" class="screen" hidden aria-labelledby="race-title">
+      <h1 id="race-title">Solo Race</h1>
+      <div class="status-line">
+        <span id="race-progress"><strong>Checkpoint 1 of 6</strong></span>
+        <span id="race-position">Position: 0 steps</span>
+        <span id="race-score">&#10003; 0 &middot; &#10007; 0</span>
+      </div>
+      <div class="track" aria-hidden="true">
+        <div class="track-line"></div>
+        <div id="track-token" class="track-token">&#127939;</div>
+        <div class="track-flag">&#127937;</div>
+      </div>
+      <div class="row">
+        <button id="race-approach" class="btn primary" type="button">Approach checkpoint 1</button>
+        <button id="race-quit" class="btn" type="button">Quit</button>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="screen-results" class="screen" hidden aria-labelledby="results-title">
+      <h1 id="results-title">Learning Results</h1>
+      <div class="stat-grid">
+        <div class="stat"><div class="num" id="res-correct">0</div><div class="muted">Correct</div></div>
+        <div class="stat"><div class="num" id="res-incorrect">0</div><div class="muted">Wrong</div></div>
+        <div class="stat"><div class="num" id="res-position">0</div><div class="muted">Steps</div></div>
+      </div>
+      <h2>Vocabulary this run</h2>
+      <ul id="res-vocab" class="vocab-list"></ul>
+      <div class="row">
+        <button id="res-again" class="btn primary" type="button">Play again</button>
+        <button id="res-home" class="btn" type="button">Home</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Checkpoint decision modal -->
+  <div id="modal-checkpoint" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="cp-title">
+    <div class="dialog">
+      <h2 id="cp-title">Choose your path</h2>
+      <p class="muted">Higher risk = bigger reward and bigger penalty.</p>
+      <div class="path-list">
+        <button class="btn path-card" data-path="easy" type="button">
+          <span class="path-name">Easy <span class="kbd">E</span></span>
+          <span class="path-meta">&#9650; +1 &middot; &#9201; 1s &middot; vocabulary</span>
+        </button>
+        <button class="btn path-card" data-path="medium" type="button">
+          <span class="path-name">Medium <span class="kbd">M</span></span>
+          <span class="path-meta">&#9650; +2 &middot; &#9201; 2s &middot; image</span>
+        </button>
+        <button class="btn path-card" data-path="hard" type="button">
+          <span class="path-name">Hard <span class="kbd">H</span></span>
+          <span class="path-meta">&#9650; +4 &middot; &#8617; &#8722;1 &middot; &#9201; 3.5s &middot; sentence</span>
+        </button>
+      </div>
+      <div class="row" style="margin-top:16px;">
+        <button id="cp-cancel" class="btn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Question modal -->
+  <div id="modal-question" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="q-title">
+    <div class="dialog">
+      <h2 id="q-title" class="sr-only">Question</h2>
+      <p id="q-path" class="muted"></p>
+      <div id="q-image" class="q-image" hidden></div>
+      <p id="q-prompt" class="q-prompt"></p>
+      <ul id="q-options" class="options" role="radiogroup" aria-label="Answer options"></ul>
+      <p id="q-feedback" class="q-feedback" role="status" aria-live="polite"></p>
+      <div class="row">
+        <button id="q-submit" class="btn primary" type="button" disabled>Submit</button>
+        <button id="q-continue" class="btn primary" type="button" hidden>Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="live" class="sr-only" aria-live="assertive"></div>
+
+  <script src="mock-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
