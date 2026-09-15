@@ -3,8 +3,7 @@
   'use strict';
 
   var LR = window.LR;
-  var cfg = LR.config;
-  var QB = LR.questions;
+  LR.accounts = LR.accounts || Object.create(null);
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function $(s, r) { return (r || document).querySelector(s); }
@@ -17,6 +16,7 @@
   var game = null;
   var scene = null;
   var sceneReady = false;
+  var logicInstance = null;
 
   function show(screen) {
     state.screen = screen;
@@ -106,31 +106,33 @@
   }
 
   function startRace() {
+    if (!logicInstance) {
+      logicInstance = new LR.Logic.LangRushLogic(LR.dataset);
+    }
     if (!game) {
       initPhaser();
       var checkReady = setInterval(function () {
         if (sceneReady) {
           clearInterval(checkReady);
+          scene.setLogic(logicInstance);
           beginRace();
         }
       }, 50);
     } else if (scene) {
+      scene.setLogic(logicInstance);
       beginRace();
     }
   }
 
   function beginRace() {
     scene.resetRace();
-    state.race = { checkpoint: 0, total: cfg.checkpoints, position: 0, correct: 0, incorrect: 0, vocab: [], current: null };
+    state.race = logicInstance.getState();
     show('race');
   }
 
   function onCheckpointReached(data) {
     if (!state.race) return;
-    state.race.checkpoint = data.checkpoint - 1;
-    state.race.position = data.position;
-    state.race.correct = data.correct;
-    state.race.incorrect = data.incorrect;
+    state.race = data;
 
     renderRace();
 
@@ -152,22 +154,19 @@
 
   function onRaceFinished(data) {
     if (!state.race) return;
-    state.race.correct = data.correct;
-    state.race.incorrect = data.incorrect;
-    state.race.position = data.position;
-    state.race.vocab = data.vocab;
+    state.race = data;
     finishRace();
   }
 
   function renderRace() {
     var r = state.race;
-    $('#race-progress').innerHTML = '<strong>Checkpoint ' + Math.min(r.checkpoint + 1, r.total) + ' of ' + r.total + '</strong>';
+    $('#race-progress').innerHTML = '<strong>Checkpoint ' + Math.min(r.checkpoint + 1, r.totalCheckpoints) + ' of ' + r.totalCheckpoints + '</strong>';
     $('#race-position').textContent = 'Position: ' + r.position + ' steps';
     var sc = $('#race-score-correct'), sw = $('#race-score-wrong');
     if (sc) { sc.textContent = '\u2713 ' + r.correct; sc.setAttribute('aria-label', 'Correct: ' + r.correct); }
     if (sw) { sw.textContent = '\u2717 ' + r.incorrect; sw.setAttribute('aria-label', 'Wrong: ' + r.incorrect); }
     var approach = $('#race-approach');
-    if (r.checkpoint >= r.total) { approach.hidden = true; }
+    if (r.isFinished) { approach.hidden = true; }
     else { approach.hidden = false; approach.textContent = 'Approach checkpoint ' + (r.checkpoint + 1); }
   }
 
@@ -220,8 +219,9 @@
   }
 
   function submitAnswer() {
-    var cur = state.race.current; if (!cur || cur.selected == null) return;
-    var selectedIndex = cur.selected;
+    var selectedBtn = $('#q-options .option.selected');
+    if (!selectedBtn) return;
+    var selectedIndex = Number(selectedBtn.getAttribute('data-index'));
     if (scene) scene.submitAnswer(selectedIndex);
   }
 

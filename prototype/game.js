@@ -4,83 +4,25 @@
 
   const GAME_WIDTH = 640;
   const GAME_HEIGHT = 300;
-  const TOTAL_CHECKPOINTS = 6;
-  const MAX_STEPS = 24;
-
-  const PATHS = {
-    easy: { id: 'easy', label: 'Easy', step: 1, stun: 1000, back: 0, color: 0x4caf50 },
-    medium: { id: 'medium', label: 'Medium', step: 2, stun: 2000, back: 0, color: 0xff9800 },
-    hard: { id: 'hard', label: 'Hard', step: 4, stun: 3500, back: 1, color: 0xf44336 }
-  };
 
   class RaceScene extends Phaser.Scene {
     constructor() {
       super('RaceScene');
-      this.checkpoint = 0;
-      this.position = 0;
-      this.correct = 0;
-      this.incorrect = 0;
-      this.vocab = [];
-      this.currentQuestion = null;
-      this.currentPath = null;
-      this.playerToken = null;
       this.checkpointMarkers = [];
       this.trackGraphics = null;
+      this.playerToken = null;
       this.isStunned = false;
       this.stunTimer = null;
+      
+      // Callbacks
       this.onCheckpointReached = null;
       this.onQuestionAnswered = null;
       this.onRaceFinished = null;
-      this.srsData = this.loadSRS();
     }
 
-    loadSRS() {
-      try {
-        const stored = localStorage.getItem('langrush_srs');
-        return stored ? JSON.parse(stored) : {};
-      } catch {
-        return {};
-      }
-    }
-
-    saveSRS() {
-      try {
-        localStorage.setItem('langrush_srs', JSON.stringify(this.srsData));
-      } catch (e) {
-        console.warn('Failed to save SRS data:', e);
-      }
-    }
-
-    getSRSWeight(vocab) {
-      const data = this.srsData[vocab];
-      if (!data) return 1;
-      const now = Date.now();
-      const elapsed = now - data.lastReview;
-      const interval = data.interval || 1;
-      if (elapsed >= interval) {
-        return Math.min(10, data.easeFactor || 2.5);
-      }
-      return 0.5;
-    }
-
-    updateSRS(vocab, correct) {
-      const now = Date.now();
-      let data = this.srsData[vocab] || { interval: 1, easeFactor: 2.5, lastReview: now, reviews: 0 };
-
-      if (correct) {
-        data.reviews++;
-        if (data.reviews === 1) data.interval = 1 * 24 * 60 * 60 * 1000;
-        else if (data.reviews === 2) data.interval = 6 * 24 * 60 * 60 * 1000;
-        else data.interval = Math.round(data.interval * data.easeFactor);
-        data.easeFactor = Math.max(1.3, data.easeFactor + 0.1);
-      } else {
-        data.reviews = 0;
-        data.interval = 1 * 24 * 60 * 60 * 1000;
-        data.easeFactor = Math.max(1.3, data.easeFactor - 0.2);
-      }
-      data.lastReview = now;
-      this.srsData[vocab] = data;
-      this.saveSRS();
+    // Set the logic module from outside (app.js)
+    setLogic(logicInstance) {
+      this.logic = logicInstance;
     }
 
     preload() {
@@ -109,6 +51,7 @@
       const trackLeft = 40;
       const trackRight = GAME_WIDTH - 40;
       const trackWidth = trackRight - trackLeft;
+      const TOTAL_CHECKPOINTS = window.LR.Logic.TOTAL_CHECKPOINTS;
 
       g.lineStyle(4, 0x333842);
       g.beginPath();
@@ -131,6 +74,7 @@
       const trackLeft = 40;
       const trackRight = GAME_WIDTH - 40;
       const trackWidth = trackRight - trackLeft;
+      const TOTAL_CHECKPOINTS = window.LR.Logic.TOTAL_CHECKPOINTS;
 
       for (let i = 1; i <= TOTAL_CHECKPOINTS; i++) {
         const x = trackLeft + (trackWidth * i / (TOTAL_CHECKPOINTS + 1));
@@ -159,12 +103,15 @@
     }
 
     updateTokenPosition() {
-      if (!this.playerToken) return;
+      if (!this.playerToken || !this.logic) return;
+      const state = this.logic.getState();
+      
       const trackY = GAME_HEIGHT / 2;
       const trackLeft = 40;
       const trackRight = GAME_WIDTH - 40;
       const trackWidth = trackRight - trackLeft;
-      const pct = Math.max(0, Math.min(1, this.position / MAX_STEPS));
+      
+      const pct = Math.max(0, Math.min(1, state.position / state.maxSteps));
       const x = trackLeft + trackWidth * pct;
       this.tweens.add({
         targets: this.playerToken,
@@ -175,11 +122,14 @@
     }
 
     updateCheckpointMarkers() {
+      if (!this.logic) return;
+      const state = this.logic.getState();
+      
       this.checkpointMarkers.forEach((cp, i) => {
-        if (i < this.checkpoint) {
+        if (i < state.checkpoint) {
           cp.marker.setFillStyle(0x1f7a4d, 1);
           cp.label.setColor('#1f7a4d');
-        } else if (i === this.checkpoint) {
+        } else if (i === state.checkpoint) {
           cp.marker.setFillStyle(0xff9800, 1);
           cp.label.setColor('#ff9800');
         } else {
@@ -190,93 +140,62 @@
     }
 
     updateUI() {
+      if (!this.logic) return;
+      const state = this.logic.getState();
       if (this.onCheckpointReached) {
-        this.onCheckpointReached({
-          checkpoint: this.checkpoint + 1,
-          total: TOTAL_CHECKPOINTS,
-          position: this.position,
-          correct: this.correct,
-          incorrect: this.incorrect
-        });
+        this.onCheckpointReached(state);
       }
     }
 
     approachCheckpoint() {
-      if (this.checkpoint >= TOTAL_CHECKPOINTS) return;
+      if (!this.logic) return;
+      if (this.logic.isFinished()) return;
+      
+      const state = this.logic.getState();
       if (this.onCheckpointReached) {
         this.onCheckpointReached({
-          checkpoint: this.checkpoint + 1,
-          total: TOTAL_CHECKPOINTS,
-          position: this.position,
-          correct: this.correct,
-          incorrect: this.incorrect,
+          ...state,
           showChoice: true
         });
       }
     }
 
     choosePath(pathId) {
-      this.currentPath = PATHS[pathId];
-      const pool = window.LR?.questions?.[pathId] || [];
-      if (!pool.length) return;
+      if (!this.logic) return;
+      const choice = this.logic.choosePath(pathId);
+      if (!choice) return;
 
-      const weightedPool = pool.map(q => ({
-        question: q,
-        weight: this.getSRSWeight(q.vocab)
-      }));
-
-      const totalWeight = weightedPool.reduce((sum, w) => sum + w.weight, 0);
-      let random = Math.random() * totalWeight;
-      let selected = weightedPool[0];
-      for (const w of weightedPool) {
-        random -= w.weight;
-        if (random <= 0) { selected = w; break; }
-      }
-
-      this.currentQuestion = selected.question;
       if (this.onQuestionAnswered) {
         this.onQuestionAnswered({
-          path: this.currentPath,
-          question: this.currentQuestion,
+          path: choice.path,
+          question: choice.question,
           showQuestion: true
         });
       }
     }
 
     submitAnswer(selectedIndex) {
-      if (!this.currentQuestion || this.isStunned) return;
+      if (!this.logic || this.isStunned) return;
 
-      const correct = selectedIndex === this.currentQuestion.correct;
-      this.vocab.push(this.currentQuestion.vocab);
-      this.updateSRS(this.currentQuestion.vocab, correct);
+      const result = this.logic.submitAnswer(selectedIndex);
+      if (!result) return;
 
-      if (correct) {
-        this.correct++;
-        this.position += this.currentPath.step;
-        this.updateTokenPosition();
+      this.updateTokenPosition();
+      
+      if (result.correct) {
         this.updateCheckpointMarkers();
       } else {
-        this.incorrect++;
-        if (this.currentPath.back) {
-          this.position = Math.max(0, this.position - this.currentPath.back);
-          this.updateTokenPosition();
-        }
-        this.triggerStun(this.currentPath.stun);
+        this.triggerStun(result.path.stun);
       }
 
       this.updateUI();
 
       if (this.onQuestionAnswered) {
         this.onQuestionAnswered({
-          correct,
-          path: this.currentPath,
-          question: this.currentQuestion,
-          selectedIndex,
+          ...result,
           showFeedback: true
         });
       }
-
-      this.currentQuestion = null;
     }
 
     triggerStun(ms) {
@@ -291,10 +210,12 @@
     }
 
     continueRace() {
-      this.checkpoint++;
+      if (!this.logic) return;
+      this.logic.advanceCheckpoint();
       this.updateCheckpointMarkers();
 
-      if (this.checkpoint >= TOTAL_CHECKPOINTS) {
+      const state = this.logic.getState();
+      if (state.isFinished) {
         this.finishRace();
       } else {
         this.updateUI();
@@ -302,24 +223,16 @@
     }
 
     finishRace() {
+      if (!this.logic) return;
       if (this.onRaceFinished) {
-        this.onRaceFinished({
-          correct: this.correct,
-          incorrect: this.incorrect,
-          position: this.position,
-          vocab: this.vocab
-        });
+        this.onRaceFinished(this.logic.getState());
       }
     }
 
     resetRace() {
-      this.checkpoint = 0;
-      this.position = 0;
-      this.correct = 0;
-      this.incorrect = 0;
-      this.vocab = [];
-      this.currentQuestion = null;
-      this.currentPath = null;
+      if (this.logic) {
+        this.logic.reset();
+      }
       this.isStunned = false;
       if (this.stunTimer) this.stunTimer.remove();
       if (this.playerToken) {
@@ -332,9 +245,6 @@
 
   window.LR = window.LR || {};
   window.LR.Game = {
-    RaceScene,
-    PATHS,
-    TOTAL_CHECKPOINTS,
-    MAX_STEPS
+    RaceScene
   };
 })();
