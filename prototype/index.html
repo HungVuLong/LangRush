@@ -18,10 +18,11 @@
     <section id="screen-auth" class="screen" aria-labelledby="auth-title">
       <div class="card">
         <div class="tabs" role="tablist" aria-label="Authentication mode">
-          <button id="tab-login" class="tab active" role="tab" aria-selected="true" type="button">Log in</button>
-          <button id="tab-register" class="tab" role="tab" aria-selected="false" type="button">Register</button>
+          <button id="tab-login" class="tab active" role="tab" aria-selected="true" aria-controls="auth-panel" type="button">Log in</button>
+          <button id="tab-register" class="tab" role="tab" aria-selected="false" aria-controls="auth-panel" type="button">Register</button>
         </div>
-        <h1 id="auth-title">Log in</h1>
+        <div id="auth-panel" role="tabpanel" aria-labelledby="auth-title">
+        <h1 id="auth-title" tabindex="-1">Log in</h1>
         <p class="muted">Prototype: register any username (min 3 chars) and password (min 6 chars). Data resets on reload.</p>
         <p id="auth-error" class="form-error" role="alert" aria-live="assertive"></p>
         <form id="auth-form" novalidate>
@@ -37,12 +38,13 @@
           </div>
           <button id="auth-submit" class="btn primary block" type="submit">Log in</button>
         </form>
+        </div>
       </div>
     </section>
 
     <!-- HOME -->
     <section id="screen-home" class="screen" hidden aria-labelledby="home-title">
-      <h1 id="home-title">Welcome, <span id="home-user">player</span></h1>
+      <h1 id="home-title" tabindex="-1">Welcome, <span id="home-user">player</span></h1>
       <p class="muted">Solo Practice — race, choose a path at each checkpoint, and answer questions to advance.</p>
       <div class="row">
         <button id="home-start" class="btn primary" type="button">Start Solo Practice</button>
@@ -52,14 +54,21 @@
 
     <!-- RACE -->
     <section id="screen-race" class="screen" hidden aria-labelledby="race-title">
-      <h1 id="race-title">Solo Race</h1>
+      <h1 id="race-title" tabindex="-1">Solo Race</h1>
       <div class="status-line">
         <span id="race-progress"><strong>Checkpoint 1 of 6</strong></span>
         <span id="race-position">Position: 0 steps</span>
-        <span id="race-score">&#10003; 0 &middot; &#10007; 0</span>
+        <span id="race-score"><span id="race-score-correct" aria-label="Correct: 0">&#10003; 0</span> &middot; <span id="race-score-wrong" aria-label="Wrong: 0">&#10007; 0</span></span>
       </div>
       <div class="track" aria-hidden="true">
         <div class="track-line"></div>
+        <!-- P1-R1: checkpoint tick marks at each of the 6 checkpoints (positions 1/6 … 6/6 of the 96% usable width + 2% offset) -->
+        <div class="track-tick" style="left:18%"></div>
+        <div class="track-tick" style="left:34%"></div>
+        <div class="track-tick" style="left:50%"></div>
+        <div class="track-tick" style="left:66%"></div>
+        <div class="track-tick" style="left:82%"></div>
+        <div class="track-tick" style="left:98%"></div>
         <div id="track-token" class="track-token">&#127939;</div>
         <div class="track-flag">&#127937;</div>
       </div>
@@ -71,7 +80,7 @@
 
     <!-- RESULTS -->
     <section id="screen-results" class="screen" hidden aria-labelledby="results-title">
-      <h1 id="results-title">Learning Results</h1>
+      <h1 id="results-title" tabindex="-1">Learning Results</h1>
       <div class="stat-grid">
         <div class="stat"><div class="num" id="res-correct">0</div><div class="muted">Correct</div></div>
         <div class="stat"><div class="num" id="res-incorrect">0</div><div class="muted">Wrong</div></div>
@@ -92,15 +101,15 @@
       <h2 id="cp-title">Choose your path</h2>
       <p class="muted">Higher risk = bigger reward and bigger penalty.</p>
       <div class="path-list">
-        <button class="btn path-card" data-path="easy" type="button">
+        <button class="btn path-card" data-path="easy" type="button" aria-label="Easy path: advance 1 step, stun 1 second. Vocabulary question.">
           <span class="path-name">Easy <span class="kbd">E</span></span>
           <span class="path-meta">&#9650; +1 &middot; &#9201; 1s &middot; vocabulary</span>
         </button>
-        <button class="btn path-card" data-path="medium" type="button">
+        <button class="btn path-card" data-path="medium" type="button" aria-label="Medium path: advance 2 steps, stun 2 seconds. Image question.">
           <span class="path-name">Medium <span class="kbd">M</span></span>
           <span class="path-meta">&#9650; +2 &middot; &#9201; 2s &middot; image</span>
         </button>
-        <button class="btn path-card" data-path="hard" type="button">
+        <button class="btn path-card" data-path="hard" type="button" aria-label="Hard path: advance 4 steps, back 1 step, stun 3.5 seconds. Sentence question.">
           <span class="path-name">Hard <span class="kbd">H</span></span>
           <span class="path-meta">&#9650; +4 &middot; &#8617; &#8722;1 &middot; &#9201; 3.5s &middot; sentence</span>
         </button>
@@ -118,7 +127,7 @@
       <p id="q-path" class="muted"></p>
       <div id="q-image" class="q-image" hidden></div>
       <p id="q-prompt" class="q-prompt"></p>
-      <ul id="q-options" class="options" role="radiogroup" aria-label="Answer options"></ul>
+      <ul id="q-options" class="options" aria-label="Answer options"></ul>
       <p id="q-feedback" class="q-feedback" role="status" aria-live="polite"></p>
       <div class="row">
         <button id="q-submit" class="btn primary" type="button" disabled>Submit</button>

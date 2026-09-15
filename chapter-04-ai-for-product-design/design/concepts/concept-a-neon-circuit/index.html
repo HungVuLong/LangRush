@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LangRush · Neon Circuit</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="nc-body">
+  <a class="nc-skip" href="#nc-main">Skip to content</a>
+
+  <div class="nc-scanlines" aria-hidden="true"></div>
+
+  <header class="nc-hud">
+    <span class="nc-hud__brand">▮ LANGRUSH</span>
+    <span class="nc-hud__tag">NEON CIRCUIT · SOLO</span>
+  </header>
+
+  <main id="nc-main" class="nc-main">
+
+    <!-- ============ AUTH SCREEN ============ -->
+    <section id="nc-screen-auth" class="nc-screen" aria-labelledby="nc-auth-title">
+      <div class="nc-authcard">
+        <h1 id="nc-auth-title" class="nc-authcard__title">Access Terminal</h1>
+
+        <div class="nc-tabs" role="tablist" aria-label="Login or register">
+          <button id="nc-tab-login" class="nc-tab is-active" role="tab" aria-selected="true" aria-controls="nc-authform" type="button">Login</button>
+          <button id="nc-tab-register" class="nc-tab" role="tab" aria-selected="false" aria-controls="nc-authform" type="button">Register</button>
+        </div>
+
+        <form id="nc-authform" class="nc-authform" novalidate>
+          <div class="nc-field">
+            <label class="nc-label" for="nc-username">Username</label>
+            <input class="nc-input" id="nc-username" name="username" type="text" autocomplete="username"
+                   aria-describedby="nc-username-err" required />
+            <p id="nc-username-err" class="nc-fielderr" role="alert" hidden></p>
+          </div>
+
+          <div class="nc-field">
+            <label class="nc-label" for="nc-password">Password</label>
+            <input class="nc-input" id="nc-password" name="password" type="password" autocomplete="current-password"
+                   aria-describedby="nc-password-err" required />
+            <p id="nc-password-err" class="nc-fielderr" role="alert" hidden></p>
+          </div>
+
+          <p id="nc-auth-generic" class="nc-generic-err" role="alert" hidden>
+            <span aria-hidden="true">⚠</span> <span class="nc-generic-err__txt"></span>
+          </p>
+
+          <button id="nc-auth-submit" class="nc-btn nc-btn--primary" type="submit">
+            <span class="nc-btn__label">Login</span>
+            <span class="nc-spinner" aria-hidden="true" hidden></span>
+          </button>
+          <p class="nc-note">Scope: Solo only. Party <strong>Lobby</strong> is <em>POST-MVP</em>.</p>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ HOME SCREEN ============ -->
+    <section id="nc-screen-home" class="nc-screen" aria-labelledby="nc-home-title" hidden>
+      <div class="nc-homecard">
+        <h1 id="nc-home-title" class="nc-homecard__title">System Online</h1>
+        <p class="nc-homecard__user">Pilot: <span id="nc-home-user"></span></p>
+        <div class="nc-homecard__actions">
+          <button id="nc-start-solo" class="nc-btn nc-btn--primary" type="button">▶ Start Solo Practice</button>
+          <button id="nc-logout" class="nc-btn nc-btn--ghost" type="button">Log out</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RACE SCREEN ============ -->
+    <section id="nc-screen-race" class="nc-screen" aria-labelledby="nc-race-title" hidden>
+      <div class="nc-racehead">
+        <h1 id="nc-race-title" class="nc-racehead__title">Circuit Run</h1>
+        <button id="nc-quit" class="nc-btn nc-btn--danger" type="button">⏹ Quit</button>
+      </div>
+
+      <p id="nc-status" class="nc-status" role="status" aria-live="polite"></p>
+
+      <div class="nc-lane" aria-hidden="true">
+        <div class="nc-lane__nodes" id="nc-lane-nodes"></div>
+        <div class="nc-lane__token" id="nc-token">◉</div>
+      </div>
+
+      <div class="nc-race-center">
+        <button id="nc-approach" class="nc-btn nc-btn--primary" type="button">Approach Checkpoint ▶</button>
+      </div>
+    </section>
+
+    <!-- ============ RESULTS SCREEN ============ -->
+    <section id="nc-screen-results" class="nc-screen" aria-labelledby="nc-results-title" hidden>
+      <div class="nc-resultscard">
+        <h1 id="nc-results-title" class="nc-resultscard__title">Run Complete</h1>
+        <ul class="nc-scoreline">
+          <li><span aria-hidden="true">✓</span> Correct: <strong id="nc-res-correct">0</strong></li>
+          <li><span aria-hidden="true">✗</span> Wrong: <strong id="nc-res-wrong">0</strong></li>
+          <li><span aria-hidden="true">▲</span> Total steps: <strong id="nc-res-steps">0</strong></li>
+        </ul>
+        <h2 class="nc-resultscard__sub">Vocabulary touched</h2>
+        <ul id="nc-res-vocab" class="nc-vocablist"></ul>
+        <div class="nc-resultscard__actions">
+          <button id="nc-play-again" class="nc-btn nc-btn--primary" type="button">↻ Play again</button>
+          <button id="nc-to-home" class="nc-btn nc-btn--ghost" type="button">Home</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ PATH MODAL ============ -->
+  <div id="nc-path-overlay" class="nc-overlay" hidden>
+    <div class="nc-modal" role="dialog" aria-modal="true" aria-labelledby="nc-path-title" id="nc-path-modal">
+      <h2 id="nc-path-title" class="nc-modal__title">Choose your Path</h2>
+      <p class="nc-modal__hint">Keys: <kbd>E</kbd> <kbd>M</kbd> <kbd>H</kbd></p>
+      <div class="nc-paths" role="group" aria-label="Path options">
+        <button class="nc-path nc-path--easy" data-path="easy" type="button">
+          <span class="nc-path__name">Easy <kbd>E</kbd></span>
+          <span class="nc-path__reward"><span aria-hidden="true">▲</span> Reward: +1 step</span>
+          <span class="nc-path__penalty"><span aria-hidden="true">⏱</span> Penalty: stun 1.0s</span>
+          <span class="nc-path__type">Vocabulary</span>
+        </button>
+        <button class="nc-path nc-path--medium" data-path="medium" type="button">
+          <span class="nc-path__name">Medium <kbd>M</kbd></span>
+          <span class="nc-path__reward"><span aria-hidden="true">▲</span> Reward: +2 steps</span>
+          <span class="nc-path__penalty"><span aria-hidden="true">⏱</span> Penalty: stun 2.0s</span>
+          <span class="nc-path__type">Image</span>
+        </button>
+        <button class="nc-path nc-path--hard" data-path="hard" type="button">
+          <span class="nc-path__name">Hard <kbd>H</kbd></span>
+          <span class="nc-path__reward"><span aria-hidden="true">▲</span> Reward: +4 steps</span>
+          <span class="nc-path__penalty"><span aria-hidden="true">⏱</span> Penalty: stun 3.5s <span aria-hidden="true">↩</span> back 1</span>
+          <span class="nc-path__type">Sentence</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ QUESTION MODAL ============ -->
+  <div id="nc-q-overlay" class="nc-overlay" hidden>
+    <div class="nc-modal nc-modal--q" role="dialog" aria-modal="true" aria-labelledby="nc-q-title" id="nc-q-modal">
+      <p id="nc-q-badge" class="nc-q-badge"></p>
+      <h2 id="nc-q-title" class="nc-modal__title nc-q-title"></h2>
+      <div id="nc-q-glyph" class="nc-q-glyph" hidden></div>
+
+      <div id="nc-q-options" class="nc-options" role="radiogroup" aria-labelledby="nc-q-title"></div>
+
+      <div id="nc-q-feedback" class="nc-feedback" role="status" aria-live="assertive" hidden></div>
+
+      <div class="nc-modal__actions">
+        <button id="nc-q-submit" class="nc-btn nc-btn--primary" type="button" disabled>Submit</button>
+        <button id="nc-q-continue" class="nc-btn nc-btn--primary" type="button" hidden>Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="mock-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

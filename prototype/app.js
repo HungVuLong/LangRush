@@ -78,7 +78,10 @@
     var r = state.race;
     $('#race-progress').innerHTML = '<strong>Checkpoint ' + Math.min(r.checkpoint + 1, r.total) + ' of ' + r.total + '</strong>';
     $('#race-position').textContent = 'Position: ' + r.position + ' steps';
-    $('#race-score').textContent = '\u2713 ' + r.correct + ' \u00B7 \u2717 ' + r.incorrect;
+    // P2-R2: update labelled score spans so screen readers get "Correct: N" / "Wrong: N"
+    var sc = $('#race-score-correct'), sw = $('#race-score-wrong');
+    if (sc) { sc.textContent = '\u2713 ' + r.correct; sc.setAttribute('aria-label', 'Correct: ' + r.correct); }
+    if (sw) { sw.textContent = '\u2717 ' + r.incorrect; sw.setAttribute('aria-label', 'Wrong: ' + r.incorrect); }
     var pct = Math.max(0, Math.min(100, (r.position / cfg.maxSteps) * 100));
     var token = $('#track-token');
     if (reduceMotion) token.style.transition = 'none';
@@ -115,7 +118,7 @@
       var li = document.createElement('li');
       var b = document.createElement('button');
       b.type = 'button'; b.className = 'option'; b.setAttribute('data-index', i);
-      b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', 'false');
+      b.setAttribute('aria-pressed', 'false');
       var key = document.createElement('span'); key.className = 'opt-key'; key.textContent = letters[i];
       var txt = document.createElement('span'); txt.className = 'opt-text'; txt.textContent = text;
       b.appendChild(key); b.appendChild(txt);
@@ -134,7 +137,7 @@
       if (b.disabled) return;
       var on = Number(b.getAttribute('data-index')) === i;
       b.classList.toggle('selected', on);
-      b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
     $('#q-submit').disabled = false;
   }
@@ -182,6 +185,7 @@
         window.clearInterval(iv);
         modal.classList.remove('shake');
         c.disabled = false; c.textContent = 'Continue'; c.focus();
+        announce('Stun ended. Continue available.'); // P1-Q2: notify AT when stun expires
       } else { label(); }
     }, 100);
   }
