@@ -4,9 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LangRush — Prototype (Solo)</title>
-  <link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 </head>
-<body>
+  <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="app-header">
     <span class="brand">LangRush</span>
@@ -60,18 +61,7 @@
         <span id="race-position">Position: 0 steps</span>
         <span id="race-score"><span id="race-score-correct" aria-label="Correct: 0">&#10003; 0</span> &middot; <span id="race-score-wrong" aria-label="Wrong: 0">&#10007; 0</span></span>
       </div>
-      <div class="track" aria-hidden="true">
-        <div class="track-line"></div>
-        <!-- P1-R1: checkpoint tick marks at each of the 6 checkpoints (positions 1/6 … 6/6 of the 96% usable width + 2% offset) -->
-        <div class="track-tick" style="left:18%"></div>
-        <div class="track-tick" style="left:34%"></div>
-        <div class="track-tick" style="left:50%"></div>
-        <div class="track-tick" style="left:66%"></div>
-        <div class="track-tick" style="left:82%"></div>
-        <div class="track-tick" style="left:98%"></div>
-        <div id="track-token" class="track-token">&#127939;</div>
-        <div class="track-flag">&#127937;</div>
-      </div>
+      <div id="phaser-game" class="phaser-game"></div>
       <div class="row">
         <button id="race-approach" class="btn primary" type="button">Approach checkpoint 1</button>
         <button id="race-quit" class="btn" type="button">Quit</button>
@@ -139,6 +129,7 @@
   <div id="live" class="sr-only" aria-live="assertive"></div>
 
   <script src="mock-data.js"></script>
+  <script src="game.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
