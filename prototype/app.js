@@ -184,7 +184,7 @@
   }
 
   function openQuestion(path, q) {
-    $('#q-path').textContent = path.label + ' path — ' + path.icon;
+    $('#q-path').textContent = path.label + ' path';
     $('#q-prompt').textContent = q.prompt;
     var img = $('#q-image');
     if (q.image) { img.hidden = false; img.textContent = q.image; img.setAttribute('role', 'img'); img.setAttribute('aria-label', 'Image clue'); }
