@@ -1,0 +1,21 @@
+flowchart TD
+  Launch([Launch]) --> Auth{Authenticated?}
+  Auth -- No --> Login[Login / Register]
+  Login -->|validate + simulated auth| Auth
+  Auth -- Yes --> Home[Home / Start]
+  Home --> Solo[Start Solo Practice]
+  Solo --> Race[Race View: advance on 2D track]
+  Race --> CP{Reach checkpoint?}
+  CP -- No --> Race
+  CP -- Yes --> Decide[Checkpoint Decision: Easy / Medium / Hard]
+  Decide --> Q[Question Modal: A/B/C/D]
+  Q --> Ans{Answer correct?}
+  Ans -- Yes --> Boost[Advance by step value +1 / +2 / +4]
+  Ans -- No --> Pen[Penalty: stun; Hard also back 1]
+  Boost --> End{Race end condition?}
+  Pen --> End
+  End -- No --> Race
+  End -- Yes --> Results[Learning Results Summary]
+  Results --> Home
+  Home -. POST-MVP .-> Lobby[Party Lobby: create / join by room code]
+  Lobby -. POST-MVP .-> Race
